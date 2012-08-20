@@ -210,30 +210,8 @@ var WebInspector = {
     _createPanels: function()
     {
         var hiddenPanels = (InspectorFrontendHost.hiddenPanels() || "").split(',');
-        if (hiddenPanels.indexOf("elements") === -1)
-            this.panels.elements = new WebInspector.ElementsPanel();
-        if (hiddenPanels.indexOf("resources") === -1)
-            this.panels.resources = new WebInspector.ResourcesPanel();
-        if (hiddenPanels.indexOf("network") === -1)
-            this.panels.network = new WebInspector.NetworkPanel();
-        if (hiddenPanels.indexOf("scripts") === -1)
-            this.panels.scripts = new WebInspector.ScriptsPanel();
         if (hiddenPanels.indexOf("timeline") === -1)
             this.panels.timeline = new WebInspector.TimelinePanel();
-        if (hiddenPanels.indexOf("profiles") === -1) {
-            this.panels.profiles = new WebInspector.ProfilesPanel();
-            this.panels.profiles.registerProfileType(new WebInspector.CPUProfileType());
-            if (Preferences.heapProfilerPresent) {
-                if (!Preferences.detailedHeapProfiles)
-                    this.panels.profiles.registerProfileType(new WebInspector.HeapSnapshotProfileType());
-                else
-                    this.panels.profiles.registerProfileType(new WebInspector.DetailedHeapshotProfileType());
-            }
-        }
-        if (hiddenPanels.indexOf("audits") === -1)
-            this.panels.audits = new WebInspector.AuditsPanel();
-        if (hiddenPanels.indexOf("console") === -1)
-            this.panels.console = new WebInspector.ConsolePanel();
     },
 
     get attached()
@@ -359,10 +337,12 @@ var WebInspector = {
             return;
 
         this._highlightedDOMNodeId = nodeId;
+        /*
         if (nodeId)
             InspectorBackend.highlightDOMNode(nodeId);
         else
             InspectorBackend.hideDOMNodeHighlight();
+        */
     },
 
     highlightDOMNodeForTwoSeconds: function(nodeId)
@@ -462,36 +442,34 @@ WebInspector.doLoadedDone = function()
 
     WebInspector.settings = new WebInspector.Settings();
 
-    this._registerShortcuts();
+    //this._registerShortcuts();
 
     // set order of some sections explicitly
-    WebInspector.shortcutsHelp.section(WebInspector.UIString("Console"));
-    WebInspector.shortcutsHelp.section(WebInspector.UIString("Elements Panel"));
+    //WebInspector.shortcutsHelp.section(WebInspector.UIString("Console"));
+    //WebInspector.shortcutsHelp.section(WebInspector.UIString("Elements Panel"));
 
     this.drawer = new WebInspector.Drawer();
-    this.console = new WebInspector.ConsoleView(this.drawer);
-    this.drawer.visibleView = this.console;
-    this.resourceTreeModel = new WebInspector.ResourceTreeModel();
-    this.networkManager = new WebInspector.NetworkManager(this.resourceTreeModel);
-    this.domAgent = new WebInspector.DOMAgent();
+    //this.console = new WebInspector.ConsoleView(this.drawer);
+    //this.drawer.visibleView = this.console;
+    //this.resourceTreeModel = new WebInspector.ResourceTreeModel();
 
-    InspectorBackend.registerDomainDispatcher("Inspector", this);
+    //InspectorBackend.registerDomainDispatcher("Inspector", this);
 
-    this.resourceCategories = {
-        documents: new WebInspector.ResourceCategory("documents", WebInspector.UIString("Documents"), "rgb(47,102,236)"),
-        stylesheets: new WebInspector.ResourceCategory("stylesheets", WebInspector.UIString("Stylesheets"), "rgb(157,231,119)"),
-        images: new WebInspector.ResourceCategory("images", WebInspector.UIString("Images"), "rgb(164,60,255)"),
-        scripts: new WebInspector.ResourceCategory("scripts", WebInspector.UIString("Scripts"), "rgb(255,121,0)"),
-        xhr: new WebInspector.ResourceCategory("xhr", WebInspector.UIString("XHR"), "rgb(231,231,10)"),
-        fonts: new WebInspector.ResourceCategory("fonts", WebInspector.UIString("Fonts"), "rgb(255,82,62)"),
-        websockets: new WebInspector.ResourceCategory("websockets", WebInspector.UIString("WebSockets"), "rgb(186,186,186)"), // FIXME: Decide the color.
-        other: new WebInspector.ResourceCategory("other", WebInspector.UIString("Other"), "rgb(186,186,186)")
-    };
+    //this.resourceCategories = {
+    //    documents: new WebInspector.ResourceCategory("documents", WebInspector.UIString("Documents"), "rgb(47,102,236)"),
+    //    stylesheets: new WebInspector.ResourceCategory("stylesheets", WebInspector.UIString("Stylesheets"), "rgb(157,231,119)"),
+    //    images: new WebInspector.ResourceCategory("images", WebInspector.UIString("Images"), "rgb(164,60,255)"),
+    //    scripts: new WebInspector.ResourceCategory("scripts", WebInspector.UIString("Scripts"), "rgb(255,121,0)"),
+    //    xhr: new WebInspector.ResourceCategory("xhr", WebInspector.UIString("XHR"), "rgb(231,231,10)"),
+    //    fonts: new WebInspector.ResourceCategory("fonts", WebInspector.UIString("Fonts"), "rgb(255,82,62)"),
+    //    websockets: new WebInspector.ResourceCategory("websockets", WebInspector.UIString("WebSockets"), "rgb(186,186,186)"), // FIXME: Decide the color.
+    //    other: new WebInspector.ResourceCategory("other", WebInspector.UIString("Other"), "rgb(186,186,186)")
+    //};
 
-    this.cssModel = new WebInspector.CSSStyleModel();
-    this.debuggerModel = new WebInspector.DebuggerModel();
+    //this.cssModel = new WebInspector.CSSStyleModel();
+    //this.debuggerModel = new WebInspector.DebuggerModel();
 
-    this.breakpointManager = new WebInspector.BreakpointManager();
+    //this.breakpointManager = new WebInspector.BreakpointManager();
 
     this.panels = {};
     this._createPanels();
@@ -522,13 +500,13 @@ WebInspector.doLoadedDone = function()
     document.addEventListener("copy", this.documentCopy.bind(this), true);
     document.addEventListener("contextmenu", this.contextMenuEventFired.bind(this), true);
 
-    var dockToggleButton = document.getElementById("dock-status-bar-item");
-    dockToggleButton.addEventListener("click", this.toggleAttach.bind(this), false);
+    //var dockToggleButton = document.getElementById("dock-status-bar-item");
+    //dockToggleButton.addEventListener("click", this.toggleAttach.bind(this), false);
 
-    if (this.attached)
-        dockToggleButton.title = WebInspector.UIString("Undock into separate window.");
-    else
-        dockToggleButton.title = WebInspector.UIString("Dock to main window.");
+    //if (this.attached)
+    //    dockToggleButton.title = WebInspector.UIString("Undock into separate window.");
+    //else
+    //    dockToggleButton.title = WebInspector.UIString("Dock to main window.");
 
     var errorWarningCount = document.getElementById("error-warning-count");
     errorWarningCount.addEventListener("click", this.showConsole.bind(this), false);
@@ -543,14 +521,14 @@ WebInspector.doLoadedDone = function()
     document.getElementById("close-button-left").addEventListener("click", this.close, true);
     document.getElementById("close-button-right").addEventListener("click", this.close, true);
 
-    this.extensionServer.initExtensions();
+    //this.extensionServer.initExtensions();
 
     function onPopulateScriptObjects()
     {
         if (!WebInspector.currentPanel)
             WebInspector.showPanel(WebInspector.settings.lastActivePanel);
     }
-    InspectorBackend.populateScriptObjects(onPopulateScriptObjects);
+    //InspectorBackend.populateScriptObjects(onPopulateScriptObjects);
 
     if (Preferences.debuggerAlwaysEnabled || WebInspector.settings.debuggerEnabled)
         this.debuggerModel.enableDebugger();
@@ -559,14 +537,14 @@ WebInspector.doLoadedDone = function()
     if (WebInspector.settings.monitoringXHREnabled)
         InspectorBackend.setMonitoringXHREnabled(true);
 
-    InspectorBackend.setConsoleMessagesEnabled(true);
+    //InspectorBackend.setConsoleMessagesEnabled(true);
 
     function propertyNamesCallback(names)
     {
         WebInspector.cssNameCompletions = new WebInspector.CSSCompletions(names);
     }
     // As a DOMAgent method, this needs to happen after the frontend has loaded and the agent is available.
-    InspectorBackend.getSupportedCSSProperties(propertyNamesCallback);
+    //InspectorBackend.getSupportedCSSProperties(propertyNamesCallback);
 }
 
 WebInspector.addPanelToolbarIcon = function(toolbarElement, panel, previousToolbarItem)
@@ -729,7 +707,7 @@ WebInspector.openResource = function(resourceURL, inResourcesPanel)
     } else
         InspectorBackend.openInInspectedWindow(resource ? resource.url : resourceURL);
 }
-
+/*
 WebInspector._registerShortcuts = function()
 {
     var shortcut = WebInspector.KeyboardShortcut;
@@ -749,7 +727,7 @@ WebInspector._registerShortcuts = function()
         section.addRelatedKeys(keys, WebInspector.UIString("Find next/previous"));
     }
 }
-
+*/
 WebInspector.documentKeyDown = function(event)
 {
     var isInputElement = event.target.nodeName === "INPUT";
@@ -1025,7 +1003,7 @@ WebInspector.focusSearchField = function()
     searchField.focus();
     searchField.select();
 }
-
+/*
 WebInspector.toggleAttach = function()
 {
     if (!this.attached)
@@ -1033,6 +1011,7 @@ WebInspector.toggleAttach = function()
     else
         InspectorFrontendHost.requestDetachWindow();
 }
+*/
 
 WebInspector.toolbarDragStart = function(event)
 {

@@ -99,7 +99,7 @@ WebInspector.TimelinePanel = function()
     this._markTimelineRecords = [];
     this._expandOffset = 15;
 
-    InspectorBackend.registerDomainDispatcher("Timeline", new WebInspector.TimelineDispatcher(this));
+    //InspectorBackend.registerDomainDispatcher("Timeline", new WebInspector.TimelineDispatcher(this));
 }
 
 // Define row height, should be in sync with styles for timeline graphs.
@@ -270,10 +270,10 @@ WebInspector.TimelinePanel.prototype = {
     _toggleTimelineButtonClicked: function()
     {
         if (this.toggleTimelineButton.toggled)
-            InspectorBackend.stopTimelineProfiler();
+            ;//InspectorBackend.stopTimelineProfiler();
         else {
             this._clearPanel();
-            InspectorBackend.startTimelineProfiler();
+            //InspectorBackend.startTimelineProfiler();
         }
     },
 
