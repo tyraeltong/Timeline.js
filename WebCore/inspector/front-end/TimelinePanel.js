@@ -80,8 +80,7 @@ WebInspector.TimelinePanel = function()
     this._sendRequestRecords = {};
     this._scheduledResourceRequests = {};
     this._timerRecords = {};
-    this._urlEventStartRecords = {};
-    this._urlEventRecords = {};
+    this._customEventRecords = {};
 
     this._calculator = new WebInspector.TimelineCalculator();
     this._calculator._showShortEvents = false;
@@ -195,9 +194,9 @@ WebInspector.TimelinePanel.prototype = {
             recordStyles[recordTypes.MarkDOMContentEventType] = { title: WebInspector.UIString("DOMContent event"), category: this.categories.scripting };
             recordStyles[recordTypes.MarkLoadEventType] = { title: WebInspector.UIString("Load event"), category: this.categories.scripting };
             recordStyles[recordTypes.ScheduleResourceRequest] = { title: WebInspector.UIString("Schedule Request"), category: this.categories.loading };
-            recordStyles[recordTypes.URLEventStart] = { title: WebInspector.UIString("URL Event Start"), category: this.categories.scripting };
-            recordStyles[recordTypes.URLEvent] = { title: WebInspector.UIString("URL Event"), category: this.categories.scripting };
-            recordStyles[recordTypes.URLEventEnd] = { title: WebInspector.UIString("URL Event End"), category: this.categories.scripting };
+            recordStyles[recordTypes.URLEvent] = { title: WebInspector.UIString("URL Event"), category: this.categories.loading };
+            recordStyles[recordTypes.SOAPEvent] = { title: WebInspector.UIString("SOAP Event"), category: this.categories.scripting };
+            recordStyles[recordTypes.DBEvent] = { title: WebInspector.UIString("DB Event"), category: this.categories.rendering };
             this._recordStylesArray = recordStyles;
         }
         return this._recordStylesArray;
@@ -328,10 +327,10 @@ WebInspector.TimelinePanel.prototype = {
             parentRecord = this._timerRecords[record.data.timerId];
         else if (record.type === recordTypes.ResourceSendRequest)
             parentRecord = this._scheduledResourceRequests[record.data.url];
-        else if (record.type === recordTypes.URLEvent)
-            parentRecord = this._urlEventStartRecords[record.data.identifier];
-        else if (record.type === recordTypes.URLEventEnd)
-            parentRecord = this._urlEventRecords[record.data.identifier];
+        else if (record.type === recordTypes.URLEvent ||
+                 record.type === recordTypes.SOAPEvent ||
+                 record.type === recordTypes.DBEvent)
+            parentRecord = this._customEventRecords[record.data.parentId];
 
         return parentRecord;
     },
@@ -915,12 +914,10 @@ WebInspector.TimelinePanel.FormattedRecord = function(record, parentRecord, pane
             this.timeout = timerInstalledRecord.timeout;
             this.singleShot = timerInstalledRecord.singleShot;
         }
-    } else if (record.type === recordTypes.URLEventStart) { // URL Event
-        panel._urlEventStartRecords[record.data.identifier] = this;
-    } else if (record.type === recordTypes.URLEvent) {
-        panel._urlEventRecords[record.data.identifier] = this;
-    } else if (record.type === recordTypes.URLEventEnd) {
-        // todo: need to associate with start record?
+    } else if (record.type === recordTypes.URLEvent ||
+               record.type === recordTypes.SOAPEvent ||
+               record.type === recordTypes.DBEvent) { 
+        panel._customEventRecords[record.data.identifier] = this;
     }
 
     this.details = this._getRecordDetails(record, panel._sendRequestRecords);
