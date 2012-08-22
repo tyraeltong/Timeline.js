@@ -54,5 +54,17 @@ WebInspector.TimelineAgent.RecordType = {
     GCEvent : 17,
     MarkDOMContentEventType : 18,
     MarkLoadEventType : 19,
-    ScheduleResourceRequest : 20
+    ScheduleResourceRequest : 20,
+    // URL Event series
+    URLEventStart: 30,
+    URLEvent: 31,
+    URLEventEnd: 39,
+    // SOAP Event series
+    SOAPEventStart: 40,
+    SOAPEvent: 41,
+    SOAPEventEnd: 40,
+    // DB Event series
+    DBEventStart: 50,
+    DBEvent: 51,
+    DBEventEnd: 59
 };
