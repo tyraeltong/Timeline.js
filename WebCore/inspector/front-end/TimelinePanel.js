@@ -257,16 +257,6 @@ WebInspector.TimelinePanel.prototype = {
 
     _addRecordToTimeline: function(record)
     {
-        if (record.type == WebInspector.TimelineAgent.RecordType.ResourceSendRequest) {
-            var isMainResource = (record.data.identifier === WebInspector.mainResource.identifier);
-            if (isMainResource && this._mainResourceIdentifier !== record.data.identifier) {
-                // We are loading new main resource -> clear the panel. Check above is necessary since
-                // there may be several resource loads with main resource marker upon redirects, redirects are reported with
-                // the original identifier.
-                this._mainResourceIdentifier = record.data.identifier;
-                this._clearPanel();
-            }
-        }
         this._innerAddRecordToTimeline(record, this._rootRecord);
         this._scheduleRefresh();
     },
@@ -274,20 +264,7 @@ WebInspector.TimelinePanel.prototype = {
     _findParentRecord: function(record)
     {
         var recordTypes = WebInspector.TimelineAgent.RecordType;
-        var parentRecord;
-        if (record.type === recordTypes.ResourceReceiveResponse ||
-            record.type === recordTypes.ResourceFinish ||
-            record.type === recordTypes.ResourceReceiveData)
-            parentRecord = this._sendRequestRecords[record.data.identifier];
-        else if (record.type === recordTypes.TimerFire)
-            parentRecord = this._timerRecords[record.data.timerId];
-        else if (record.type === recordTypes.ResourceSendRequest)
-            parentRecord = this._scheduledResourceRequests[record.data.url];
-        else if (record.type === recordTypes.URLEvent ||
-                 record.type === recordTypes.SOAPEvent ||
-                 record.type === recordTypes.DBEvent)
-            parentRecord = this._customEventRecords[record.data.parentId];
-
+        var parentRecord = this._customEventRecords[record.data.parentId];
         return parentRecord;
     },
 
@@ -295,9 +272,7 @@ WebInspector.TimelinePanel.prototype = {
     {
         var connectedToOldRecord = false;
         var recordTypes = WebInspector.TimelineAgent.RecordType;
-        if (record.type === recordTypes.MarkDOMContentEventType || record.type === recordTypes.MarkLoadEventType)
-            parentRecord = null; // No bar entry for load events.
-        else if (parentRecord === this._rootRecord) {
+        if (parentRecord === this._rootRecord) {
             var newParentRecord = this._findParentRecord(record);
             if (newParentRecord) {
                 parentRecord = newParentRecord;
@@ -916,62 +891,14 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
         const recordTypes = WebInspector.TimelineAgent.RecordType;
 
         switch (this.type) {
-            case recordTypes.GCEvent:
-                contentHelper._appendTextRow(WebInspector.UIString("Collected"), Number.bytesToString(this.data.usedHeapSizeDelta));
-                break;
-            case recordTypes.TimerInstall:
-            case recordTypes.TimerFire:
-            case recordTypes.TimerRemove:
-                contentHelper._appendTextRow(WebInspector.UIString("Timer ID"), this.data.timerId);
-                if (typeof this.timeout === "number") {
-                    contentHelper._appendTextRow(WebInspector.UIString("Timeout"), Number.secondsToString(this.timeout / 1000));
-                    contentHelper._appendTextRow(WebInspector.UIString("Repeats"), !this.singleShot);
-                }
-                break;
-            case recordTypes.FunctionCall:
-                contentHelper._appendLinkRow(WebInspector.UIString("Location"), this.data.scriptName, this.data.scriptLine);
-                break;
-            case recordTypes.ScheduleResourceRequest:
-            case recordTypes.ResourceSendRequest:
-            case recordTypes.ResourceReceiveResponse:
-            case recordTypes.ResourceReceiveData:
-            case recordTypes.ResourceFinish:
-                contentHelper._appendLinkRow(WebInspector.UIString("Resource"), this.data.url);
-                if (this.data.requestMethod)
-                    contentHelper._appendTextRow(WebInspector.UIString("Request Method"), this.data.requestMethod);
-                if (typeof this.data.statusCode === "number")
-                    contentHelper._appendTextRow(WebInspector.UIString("Status Code"), this.data.statusCode);
-                if (this.data.mimeType)
-                    contentHelper._appendTextRow(WebInspector.UIString("MIME Type"), this.data.mimeType);
-                if (typeof this.data.expectedContentLength === "number" && this.data.expectedContentLength !== -1)
-                    contentHelper._appendTextRow(WebInspector.UIString("Expected Content Length"), this.data.expectedContentLength);
-                break;
-            case recordTypes.EvaluateScript:
-                if (this.data && this.data.url)
-                    contentHelper._appendLinkRow(WebInspector.UIString("Script"), this.data.url, this.data.lineNumber);
-                break;
-            case recordTypes.Paint:
-                contentHelper._appendTextRow(WebInspector.UIString("Location"), WebInspector.UIString("(%d, %d)", this.data.x, this.data.y));
-                contentHelper._appendTextRow(WebInspector.UIString("Dimensions"), WebInspector.UIString("%d × %d", this.data.width, this.data.height));
-            case recordTypes.RecalculateStyles: // We don't want to see default details.
-                break;
+            case recordTypes.URLEvent:
+            case recordTypes.SOAPEvent:
+            case recordTypes.DBEvent:
             default:
                 if (this.details)
                     contentHelper._appendTextRow(WebInspector.UIString("Details"), this.details);
                 break;
         }
-
-        if (this.data.scriptName && this.type !== recordTypes.FunctionCall)
-            contentHelper._appendLinkRow(WebInspector.UIString("Function Call"), this.data.scriptName, this.data.scriptLine);
-
-        if (this.usedHeapSize)
-            contentHelper._appendTextRow(WebInspector.UIString("Used Heap Size"), WebInspector.UIString("%s of %s", Number.bytesToString(this.usedHeapSize), Number.bytesToString(this.totalHeapSize)));
-
-        if (this.callSiteStackTrace && this.callSiteStackTrace.length)
-            contentHelper._appendStackTrace(WebInspector.UIString("Call Site stack"), this.callSiteStackTrace);
-
-        if (this.stackTrace)
-            contentHelper._appendStackTrace(WebInspector.UIString("Call Stack"), this.stackTrace);
 
         return contentHelper._contentTable;
     },
@@ -979,33 +906,9 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
     _getRecordDetails: function(record, sendRequestRecords)
     {
         switch (record.type) {
-            case WebInspector.TimelineAgent.RecordType.GCEvent:
-                return WebInspector.UIString("%s collected", Number.bytesToString(record.data.usedHeapSizeDelta));
-            case WebInspector.TimelineAgent.RecordType.TimerFire:
-                return record.data.scriptName ? WebInspector.linkifyResourceAsNode(record.data.scriptName, "scripts", record.data.scriptLine, "", "") : record.data.timerId;
-            case WebInspector.TimelineAgent.RecordType.FunctionCall:
-                return record.data.scriptName ? WebInspector.linkifyResourceAsNode(record.data.scriptName, "scripts", record.data.scriptLine, "", "") : null;
-            case WebInspector.TimelineAgent.RecordType.EventDispatch:
-                return record.data ? record.data.type : null;
-            case WebInspector.TimelineAgent.RecordType.Paint:
-                return record.data.width + "\u2009\u00d7\u2009" + record.data.height;
-            case WebInspector.TimelineAgent.RecordType.TimerInstall:
-            case WebInspector.TimelineAgent.RecordType.TimerRemove:
-                return this.stackTrace ? WebInspector.linkifyResourceAsNode(this.stackTrace[0].scriptName, "scripts", this.stackTrace[0].lineNumber, "", "") : record.data.timerId;
-            case WebInspector.TimelineAgent.RecordType.ParseHTML:
-            case WebInspector.TimelineAgent.RecordType.RecalculateStyles:
-                return this.stackTrace ? WebInspector.linkifyResourceAsNode(this.stackTrace[0].scriptName, "scripts", this.stackTrace[0].lineNumber, "", "") : null;
-            case WebInspector.TimelineAgent.RecordType.EvaluateScript:
-                return record.data.url ? WebInspector.linkifyResourceAsNode(record.data.url, "scripts", record.data.lineNumber, "", "") : null;
-            case WebInspector.TimelineAgent.RecordType.XHRReadyStateChange:
-            case WebInspector.TimelineAgent.RecordType.XHRLoad:
-            case WebInspector.TimelineAgent.RecordType.ScheduleResourceRequest:
-            case WebInspector.TimelineAgent.RecordType.ResourceSendRequest:
-            case WebInspector.TimelineAgent.RecordType.ResourceReceiveData:
-            case WebInspector.TimelineAgent.RecordType.ResourceReceiveResponse:
-            case WebInspector.TimelineAgent.RecordType.ResourceFinish:
-                return WebInspector.displayNameForURL(record.data.url);
-            case WebInspector.TimelineAgent.RecordType.MarkTimeline:
+            case WebInspector.TimelineAgent.RecordType.URLEvent:
+            case WebInspector.TimelineAgent.RecordType.SOAPEvent:
+            case WebInspector.TimelineAgent.RecordType.DBEvent:
                 return record.data.message;
             default:
                 return null;
