@@ -95,11 +95,11 @@ WebInspector.TimelineOverviewPane.prototype = {
         this._overviewGrid.itemsGraphsElement.removeStyleClass("hidden");
     },
 
-    showMemoryGraph: function(records) {
-        this._heapGraph.show();
-        this._heapGraph.update(records);
-        this._overviewGrid.itemsGraphsElement.addStyleClass("hidden");
-    },
+    //showMemoryGraph: function(records) {
+    //    this._heapGraph.show();
+    //    this._heapGraph.update(records);
+    //    this._overviewGrid.itemsGraphsElement.addStyleClass("hidden");
+    //},
 
     _onCheckboxClicked: function (category, event) {
         if (event.target.checked)

@@ -779,13 +779,13 @@ WebInspector.documentKeyDown = function(event)
             }
             break;
 
-        case "U+001B": // Escape key
-            event.preventDefault();
-            if (this.drawer.fullPanel)
-                return;
+        //case "U+001B": // Escape key
+        //    event.preventDefault();
+        //    if (this.drawer.fullPanel)
+        //        return;
 
-            this.drawer.visible = !this.drawer.visible;
-            break;
+        //    this.drawer.visible = !this.drawer.visible;
+        //    break;
 
         case "U+0046": // F key
             if (isMac)

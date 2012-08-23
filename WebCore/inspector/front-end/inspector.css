@@ -3561,15 +3561,15 @@ body.inactive li.selected .bubble.search-matches {
     background-position-x: -10px;
 }
 
-.timeline-category-statusbar-item.timeline-category-loading .timeline-category-checkbox {
+.timeline-category-statusbar-item.timeline-category-url .timeline-category-checkbox {
     background-position-y: 0;
 }
 
-.timeline-category-statusbar-item.timeline-category-scripting .timeline-category-checkbox {
+.timeline-category-statusbar-item.timeline-category-soap .timeline-category-checkbox {
     background-position-y: -33px;
 }
 
-.timeline-category-statusbar-item.timeline-category-rendering .timeline-category-checkbox {
+.timeline-category-statusbar-item.timeline-category-db .timeline-category-checkbox {
     background-position-y: -11px;
 }
 
@@ -3721,15 +3721,15 @@ body.inactive li.selected .bubble.search-matches {
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.timeline-category-loading .timeline-graph-bar {
+.timeline-category-url .timeline-graph-bar {
     -webkit-border-image: url(Images/timelineBarBlue.png) 4 4 5 4;
 }
 
-.timeline-category-scripting .timeline-graph-bar {
+.timeline-category-soap .timeline-graph-bar {
     -webkit-border-image: url(Images/timelineBarOrange.png) 4 4 5 4;
 }
 
-.timeline-category-rendering .timeline-graph-bar {
+.timeline-category-db .timeline-graph-bar {
     -webkit-border-image: url(Images/timelineBarPurple.png) 4 4 5 4;
 }
 
@@ -3743,31 +3743,31 @@ body.inactive li.selected .bubble.search-matches {
     width: 10px;
 }
 
-.timeline-loading {
+.timeline-url {
     -webkit-border-image: url(Images/timelineBarBlue.png) 4 4 5 4;
 }
 
-.timeline-scripting {
+.timeline-soap {
     -webkit-border-image: url(Images/timelineBarOrange.png) 4 4 5 4;
 }
 
-.timeline-rendering {
+.timeline-db {
     -webkit-border-image: url(Images/timelineBarPurple.png) 4 4 5 4;
 }
 
-.popover .timeline-aggregated-category.timeline-loading {
+.popover .timeline-aggregated-category.timeline-url {
     margin-left: 0px;
 }
 
-.timeline-category-loading .timeline-tree-icon {
+.timeline-category-url .timeline-tree-icon {
     background-position-y: 0px;
 }
 
-.timeline-category-scripting .timeline-tree-icon {
+.timeline-category-soap .timeline-tree-icon {
     background-position-y: 48px;
 }
 
-.timeline-category-rendering .timeline-tree-icon {
+.timeline-category-db .timeline-tree-icon {
     background-position-y: 72px;
 }
 

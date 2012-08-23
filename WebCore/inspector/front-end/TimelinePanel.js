@@ -83,10 +83,6 @@ WebInspector.TimelinePanel = function()
     this._customEventRecords = {};
 
     this._calculator = new WebInspector.TimelineCalculator();
-    this._calculator._showShortEvents = false;
-    var shortRecordThresholdTitle = Number.secondsToString(WebInspector.TimelinePanel.shortRecordThreshold);
-    this._showShortRecordsTitleText = WebInspector.UIString("Show the records that are shorter than %s", shortRecordThresholdTitle);
-    this._hideShortRecordsTitleText = WebInspector.UIString("Hide the records that are shorter than %s", shortRecordThresholdTitle);
     this._createStatusbarButtons();
 
     this._boundariesAreValid = true;
@@ -94,9 +90,6 @@ WebInspector.TimelinePanel = function()
 
     this._popoverHelper = new WebInspector.PopoverHelper(this._containerElement, this._getPopoverAnchor.bind(this), this._showPopover.bind(this), true);
 
-    // Disable short events filter by default.
-    this.toggleFilterButton.toggled = true;
-    this._calculator._showShortEvents = this.toggleFilterButton.toggled;
     this._markTimelineRecords = [];
     this._expandOffset = 15;
 
@@ -105,7 +98,6 @@ WebInspector.TimelinePanel = function()
 
 // Define row height, should be in sync with styles for timeline graphs.
 WebInspector.TimelinePanel.rowHeight = 18;
-WebInspector.TimelinePanel.shortRecordThreshold = 0.015;
 
 WebInspector.TimelinePanel.prototype = {
     _createTopPane: function() {
@@ -126,10 +118,6 @@ WebInspector.TimelinePanel.prototype = {
         timelinesOverviewItem.onselect = this._timelinesOverviewItemSelected.bind(this);
         timelinesOverviewItem.select(true);
 
-        var memoryOverviewItem = new WebInspector.SidebarTreeElement("resources-size-graph-sidebar-item", WebInspector.UIString("Memory"));
-        topPaneSidebarTree.appendChild(memoryOverviewItem);
-        memoryOverviewItem.onselect = this._memoryOverviewItemSelected.bind(this);
-
         this._overviewPane = new WebInspector.TimelineOverviewPane(this.categories);
         this._overviewPane.addEventListener("window changed", this._windowChanged, this);
         this._overviewPane.addEventListener("filter changed", this._refresh, this);
@@ -148,16 +136,16 @@ WebInspector.TimelinePanel.prototype = {
 
     get statusBarItems()
     {
-        return [this.toggleFilterButton.element, this.toggleTimelineButton.element, this.clearButton.element, this._overviewPane.statusBarFilters];
+        return [this.toggleTimelineButton.element, this.clearButton.element, this._overviewPane.statusBarFilters];
     },
 
     get categories()
     {
         if (!this._categories) {
             this._categories = {
-                loading: new WebInspector.TimelineCategory("loading", WebInspector.UIString("Loading"), "rgb(47,102,236)"),
-                scripting: new WebInspector.TimelineCategory("scripting", WebInspector.UIString("Scripting"), "rgb(157,231,119)"),
-                rendering: new WebInspector.TimelineCategory("rendering", WebInspector.UIString("Rendering"), "rgb(164,60,255)")
+                url: new WebInspector.TimelineCategory("url", WebInspector.UIString("URL"), "rgb(47,102,236)"),
+                soap: new WebInspector.TimelineCategory("soap", WebInspector.UIString("SOAP"), "rgb(157,231,119)"),
+                db: new WebInspector.TimelineCategory("db", WebInspector.UIString("DB"), "rgb(164,60,255)")
             };
         }
         return this._categories;
@@ -173,30 +161,9 @@ WebInspector.TimelinePanel.prototype = {
         if (!this._recordStylesArray) {
             var recordTypes = WebInspector.TimelineAgent.RecordType;
             var recordStyles = {};
-            recordStyles[recordTypes.EventDispatch] = { title: WebInspector.UIString("Event"), category: this.categories.scripting };
-            recordStyles[recordTypes.Layout] = { title: WebInspector.UIString("Layout"), category: this.categories.rendering };
-            recordStyles[recordTypes.RecalculateStyles] = { title: WebInspector.UIString("Recalculate Style"), category: this.categories.rendering };
-            recordStyles[recordTypes.Paint] = { title: WebInspector.UIString("Paint"), category: this.categories.rendering };
-            recordStyles[recordTypes.ParseHTML] = { title: WebInspector.UIString("Parse"), category: this.categories.loading };
-            recordStyles[recordTypes.TimerInstall] = { title: WebInspector.UIString("Install Timer"), category: this.categories.scripting };
-            recordStyles[recordTypes.TimerRemove] = { title: WebInspector.UIString("Remove Timer"), category: this.categories.scripting };
-            recordStyles[recordTypes.TimerFire] = { title: WebInspector.UIString("Timer Fired"), category: this.categories.scripting };
-            recordStyles[recordTypes.XHRReadyStateChange] = { title: WebInspector.UIString("XHR Ready State Change"), category: this.categories.scripting };
-            recordStyles[recordTypes.XHRLoad] = { title: WebInspector.UIString("XHR Load"), category: this.categories.scripting };
-            recordStyles[recordTypes.EvaluateScript] = { title: WebInspector.UIString("Evaluate Script"), category: this.categories.scripting };
-            recordStyles[recordTypes.MarkTimeline] = { title: WebInspector.UIString("Mark"), category: this.categories.scripting };
-            recordStyles[recordTypes.ResourceSendRequest] = { title: WebInspector.UIString("Send Request"), category: this.categories.loading };
-            recordStyles[recordTypes.ResourceReceiveResponse] = { title: WebInspector.UIString("Receive Response"), category: this.categories.loading };
-            recordStyles[recordTypes.ResourceFinish] = { title: WebInspector.UIString("Finish Loading"), category: this.categories.loading };
-            recordStyles[recordTypes.FunctionCall] = { title: WebInspector.UIString("Function Call"), category: this.categories.scripting };
-            recordStyles[recordTypes.ResourceReceiveData] = { title: WebInspector.UIString("Receive Data"), category: this.categories.loading };
-            recordStyles[recordTypes.GCEvent] = { title: WebInspector.UIString("GC Event"), category: this.categories.scripting };
-            recordStyles[recordTypes.MarkDOMContentEventType] = { title: WebInspector.UIString("DOMContent event"), category: this.categories.scripting };
-            recordStyles[recordTypes.MarkLoadEventType] = { title: WebInspector.UIString("Load event"), category: this.categories.scripting };
-            recordStyles[recordTypes.ScheduleResourceRequest] = { title: WebInspector.UIString("Schedule Request"), category: this.categories.loading };
-            recordStyles[recordTypes.URLEvent] = { title: WebInspector.UIString("URL Event"), category: this.categories.loading };
-            recordStyles[recordTypes.SOAPEvent] = { title: WebInspector.UIString("SOAP Event"), category: this.categories.scripting };
-            recordStyles[recordTypes.DBEvent] = { title: WebInspector.UIString("DB Event"), category: this.categories.rendering };
+            recordStyles[recordTypes.URLEvent] = { title: WebInspector.UIString("URL Event"), category: this.categories.url };
+            recordStyles[recordTypes.SOAPEvent] = { title: WebInspector.UIString("SOAP Event"), category: this.categories.soap };
+            recordStyles[recordTypes.DBEvent] = { title: WebInspector.UIString("DB Event"), category: this.categories.db };
             this._recordStylesArray = recordStyles;
         }
         return this._recordStylesArray;
@@ -209,9 +176,6 @@ WebInspector.TimelinePanel.prototype = {
 
         this.clearButton = new WebInspector.StatusBarButton(WebInspector.UIString("Clear"), "clear-status-bar-item");
         this.clearButton.addEventListener("click", this._clearPanel.bind(this), false);
-
-        this.toggleFilterButton = new WebInspector.StatusBarButton(this._hideShortRecordsTitleText, "timeline-filter-status-bar-item");
-        this.toggleFilterButton.addEventListener("click", this._toggleFilterButtonClicked.bind(this), false);
 
         this.recordsCounter = document.createElement("span");
         this.recordsCounter.className = "timeline-records-counter";
@@ -267,9 +231,9 @@ WebInspector.TimelinePanel.prototype = {
         this._overviewPane.showTimelines();
     },
 
-    _memoryOverviewItemSelected: function(event) {
-        this._overviewPane.showMemoryGraph(this._rootRecord.children);
-    },
+    //_memoryOverviewItemSelected: function(event) {
+    //    this._overviewPane.showMemoryGraph(this._rootRecord.children);
+    //},
 
     _toggleTimelineButtonClicked: function()
     {
@@ -279,14 +243,6 @@ WebInspector.TimelinePanel.prototype = {
             this._clearPanel();
             //InspectorBackend.startTimelineProfiler();
         }
-    },
-
-    _toggleFilterButtonClicked: function()
-    {
-        this.toggleFilterButton.toggled = !this.toggleFilterButton.toggled;
-        this._calculator._showShortEvents = this.toggleFilterButton.toggled;
-        this.toggleFilterButton.element.title = this._calculator._showShortEvents ? this._hideShortRecordsTitleText : this._showShortRecordsTitleText;
-        this._scheduleRefresh(true);
     },
 
     _timelineProfilerWasStarted: function()
@@ -492,7 +448,7 @@ WebInspector.TimelinePanel.prototype = {
             delete this._refreshTimeout;
         }
 
-        this._overviewPane.update(this._rootRecord.children, this._calculator._showShortEvents);
+        this._overviewPane.update(this._rootRecord.children, true);
         this._refreshRecords(!this._boundariesAreValid);
         this._updateRecordsCounter();
         if(!this._boundariesAreValid)
@@ -514,8 +470,6 @@ WebInspector.TimelinePanel.prototype = {
 
     _addToRecordsWindow: function(record, recordsWindow, parentIsCollapsed)
     {
-        if (!this._calculator._showShortEvents && !record.isLong())
-            return;
         var percentages = this._calculator.computeBarGraphPercentages(record);
         if (percentages.start < 100 && percentages.endWithChildren >= 0 && !record.category.hidden) {
             ++this._rootRecord._visibleRecordsCount;
@@ -924,10 +878,6 @@ WebInspector.TimelinePanel.FormattedRecord = function(record, parentRecord, pane
 }
 
 WebInspector.TimelinePanel.FormattedRecord.prototype = {
-    isLong: function()
-    {
-        return (this._lastChildEndTime - this.startTime) > WebInspector.TimelinePanel.shortRecordThreshold;
-    },
 
     get children()
     {

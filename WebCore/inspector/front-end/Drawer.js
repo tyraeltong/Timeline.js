@@ -41,7 +41,7 @@ WebInspector.Drawer = function()
     this._mainStatusBar.addEventListener("mousedown", this._startStatusBarDragging.bind(this), true);
     this._viewStatusBar = document.getElementById("other-drawer-status-bar-items");
     this._counters = document.getElementById("counters");
-    this._drawerStatusBar = document.getElementById("drawer-status-bar");
+    //this._drawerStatusBar = document.getElementById("drawer-status-bar");
 }
 
 WebInspector.Drawer.prototype = {
@@ -109,7 +109,7 @@ WebInspector.Drawer.prototype = {
             {element: this._viewStatusBar, start: {opacity: 0}, end: {opacity: 1}}
         ];
 
-        this._drawerStatusBar.insertBefore(anchoredItems, this._drawerStatusBar.firstChild);
+        //this._drawerStatusBar.insertBefore(anchoredItems, this._drawerStatusBar.firstChild);
 
         if (this._currentPanelCounters) {
             var oldRight = this._drawerStatusBar.clientWidth - (this._counters.offsetLeft + this._currentPanelCounters.offsetWidth);
@@ -171,7 +171,7 @@ WebInspector.Drawer.prototype = {
         ];
 
         if (this._currentPanelCounters) {
-            var newRight = this._drawerStatusBar.clientWidth - this._counters.offsetLeft;
+            //var newRight = this._drawerStatusBar.clientWidth - this._counters.offsetLeft;
             var oldRight = this._mainStatusBar.clientWidth - (this._currentPanelCounters.offsetLeft + this._currentPanelCounters.offsetWidth);
             var rightPadding = (newRight - oldRight);
             animations.push({element: this._currentPanelCounters, start: {"padding-right": 0}, end: {"padding-right": rightPadding}});
