@@ -189,9 +189,7 @@ var WebInspector = {
 
     _createPanels: function()
     {
-        var hiddenPanels = (InspectorFrontendHost.hiddenPanels() || "").split(',');
-        if (hiddenPanels.indexOf("timeline") === -1)
-            this.panels.timeline = new WebInspector.TimelinePanel();
+       this.panels.timeline = new WebInspector.TimelinePanel();
     },
 
     get attached()
@@ -315,12 +313,6 @@ var WebInspector = {
             return;
 
         this._highlightedDOMNodeId = nodeId;
-        /*
-        if (nodeId)
-            InspectorBackend.highlightDOMNode(nodeId);
-        else
-            InspectorBackend.hideDOMNodeHighlight();
-        */
     },
 
     highlightDOMNodeForTwoSeconds: function(nodeId)
@@ -390,19 +382,6 @@ WebInspector.PlatformFlavor = {
 
 WebInspector.loaded = function()
 {
-    if ("page" in WebInspector.queryParamsObject) {
-        var page = WebInspector.queryParamsObject.page;
-        var host = "host" in WebInspector.queryParamsObject ? WebInspector.queryParamsObject.host : window.location.host;
-        WebInspector.socket = new WebSocket("ws://" + host + "/devtools/page/" + page);
-        WebInspector.socket.onmessage = function(message) { InspectorBackend.dispatch(message.data); }
-        WebInspector.socket.onerror = function(error) { console.error(error); }
-        WebInspector.socket.onopen = function() {
-            InspectorFrontendHost.sendMessageToBackend = WebInspector.socket.send.bind(WebInspector.socket);
-            InspectorFrontendHost.loaded = WebInspector.socket.send.bind(WebInspector.socket, "loaded");
-            WebInspector.doLoadedDone();
-        }
-        return;
-    }
     WebInspector.doLoadedDone();
 }
 
@@ -420,34 +399,7 @@ WebInspector.doLoadedDone = function()
 
     WebInspector.settings = new WebInspector.Settings();
 
-    //this._registerShortcuts();
-
-    // set order of some sections explicitly
-    //WebInspector.shortcutsHelp.section(WebInspector.UIString("Console"));
-    //WebInspector.shortcutsHelp.section(WebInspector.UIString("Elements Panel"));
-
     this.drawer = new WebInspector.Drawer();
-    //this.console = new WebInspector.ConsoleView(this.drawer);
-    //this.drawer.visibleView = this.console;
-    //this.resourceTreeModel = new WebInspector.ResourceTreeModel();
-
-    //InspectorBackend.registerDomainDispatcher("Inspector", this);
-
-    //this.resourceCategories = {
-    //    documents: new WebInspector.ResourceCategory("documents", WebInspector.UIString("Documents"), "rgb(47,102,236)"),
-    //    stylesheets: new WebInspector.ResourceCategory("stylesheets", WebInspector.UIString("Stylesheets"), "rgb(157,231,119)"),
-    //    images: new WebInspector.ResourceCategory("images", WebInspector.UIString("Images"), "rgb(164,60,255)"),
-    //    scripts: new WebInspector.ResourceCategory("scripts", WebInspector.UIString("Scripts"), "rgb(255,121,0)"),
-    //    xhr: new WebInspector.ResourceCategory("xhr", WebInspector.UIString("XHR"), "rgb(231,231,10)"),
-    //    fonts: new WebInspector.ResourceCategory("fonts", WebInspector.UIString("Fonts"), "rgb(255,82,62)"),
-    //    websockets: new WebInspector.ResourceCategory("websockets", WebInspector.UIString("WebSockets"), "rgb(186,186,186)"), // FIXME: Decide the color.
-    //    other: new WebInspector.ResourceCategory("other", WebInspector.UIString("Other"), "rgb(186,186,186)")
-    //};
-
-    //this.cssModel = new WebInspector.CSSStyleModel();
-    //this.debuggerModel = new WebInspector.DebuggerModel();
-
-    //this.breakpointManager = new WebInspector.BreakpointManager();
 
     this.panels = {};
     this._createPanels();
@@ -524,23 +476,6 @@ var windowLoaded = function()
 
 window.addEventListener("DOMContentLoaded", windowLoaded, false);
 
-WebInspector.dispatch = function(message) {
-    // We'd like to enforce asynchronous interaction between the inspector controller and the frontend.
-    // This is important to LayoutTests.
-    function delayDispatch()
-    {
-        InspectorBackend.dispatch(message);
-        WebInspector.pendingDispatches--;
-    }
-    WebInspector.pendingDispatches++;
-    setTimeout(delayDispatch, 0);
-}
-
-WebInspector.dispatchMessageFromBackend = function(messageObject)
-{
-    WebInspector.dispatch(messageObject);
-}
-
 WebInspector.windowResize = function(event)
 {
     if (this.currentPanel)
@@ -582,11 +517,6 @@ WebInspector.close = function(event)
         return;
     this._isClosing = true;
     InspectorFrontendHost.closeWindow();
-}
-
-WebInspector.disconnectFromBackend = function()
-{
-    InspectorFrontendHost.disconnectFromBackend();
 }
 
 WebInspector.documentClick = function(event)
@@ -643,16 +573,6 @@ WebInspector.documentClick = function(event)
     }
 
     followLink();
-}
-
-WebInspector.openResource = function(resourceURL, inResourcesPanel)
-{
-    var resource = WebInspector.resourceForURL(resourceURL);
-    if (inResourcesPanel && resource) {
-        WebInspector.panels.resources.showResource(resource);
-        WebInspector.showPanel("resources");
-    } else
-        InspectorBackend.openInInspectedWindow(resource ? resource.url : resourceURL);
 }
 
 WebInspector.documentKeyDown = function(event)
@@ -738,17 +658,6 @@ WebInspector.documentKeyDown = function(event)
                 event.preventDefault();
             }
 
-            break;
-
-        case "U+0052": // R key
-            if ((event.metaKey && isMac) || (event.ctrlKey && !isMac)) {
-                InspectorBackend.reloadPage(event.shiftKey);
-                event.preventDefault();
-            }
-            break;
-        case "F5":
-            if (!isMac)
-                InspectorBackend.reloadPage(event.ctrlKey || event.shiftKey);
             break;
     }
 }
@@ -1264,8 +1173,7 @@ WebInspector.UIString = function(string)
         string = window.localizedStrings[string];
     else {
         if (!(string in WebInspector.missingLocalizedStrings)) {
-            if (!WebInspector.InspectorBackendStub)
-                console.error("Localized string \"" + string + "\" not found.");
+            console.error("Localized string \"" + string + "\" not found.");
             WebInspector.missingLocalizedStrings[string] = true;
         }
 
