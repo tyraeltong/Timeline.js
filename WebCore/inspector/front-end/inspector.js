@@ -39,7 +39,6 @@
     (new Image()).src = "Images/excludeButtonGlyph.png";
     (new Image()).src = "Images/focusButtonGlyph.png";
     (new Image()).src = "Images/largerResourcesButtonGlyph.png";
-    (new Image()).src = "Images/nodeSearchButtonGlyph.png";
     (new Image()).src = "Images/pauseOnExceptionButtonGlyph.png";
     (new Image()).src = "Images/percentButtonGlyph.png";
     (new Image()).src = "Images/recordButtonGlyph.png";
@@ -153,28 +152,9 @@ var WebInspector = {
 
         this._currentPanel = x;
 
-        this.updateSearchLabel();
 
         if (x) {
             x.show();
-
-            if (this.currentQuery) {
-                if (x.performSearch) {
-                    function performPanelSearch()
-                    {
-                        this.updateSearchMatchesCount();
-
-                        x.currentQuery = this.currentQuery;
-                        x.performSearch(this.currentQuery);
-                    }
-
-                    // Perform the search on a timeout so the panel switches fast.
-                    setTimeout(performPanelSearch.bind(this), 0);
-                } else {
-                    // Update to show Not found for panels that can't be searched.
-                    this.updateSearchMatchesCount();
-                }
-            }
         }
 
         for (var panelName in WebInspector.panels) {
@@ -225,8 +205,6 @@ var WebInspector = {
             return;
 
         this._attached = x;
-
-        this.updateSearchLabel();
 
         var dockToggleButton = document.getElementById("dock-status-bar-item");
         var body = document.body;
@@ -500,58 +478,27 @@ WebInspector.doLoadedDone = function()
     document.addEventListener("copy", this.documentCopy.bind(this), true);
     document.addEventListener("contextmenu", this.contextMenuEventFired.bind(this), true);
 
-    //var dockToggleButton = document.getElementById("dock-status-bar-item");
-    //dockToggleButton.addEventListener("click", this.toggleAttach.bind(this), false);
-
-    //if (this.attached)
-    //    dockToggleButton.title = WebInspector.UIString("Undock into separate window.");
-    //else
-    //    dockToggleButton.title = WebInspector.UIString("Dock to main window.");
-
-    var errorWarningCount = document.getElementById("error-warning-count");
-    errorWarningCount.addEventListener("click", this.showConsole.bind(this), false);
-    this._updateErrorAndWarningCounts();
-
-    var searchField = document.getElementById("search");
-    searchField.addEventListener("search", this.performSearch.bind(this), false); // when the search is emptied
-    searchField.addEventListener("mousedown", this._searchFieldManualFocus.bind(this), false); // when the search field is manually selected
-    searchField.addEventListener("keydown", this._searchKeyDown.bind(this), true);
-
-    toolbarElement.addEventListener("mousedown", this.toolbarDragStart, true);
     document.getElementById("close-button-left").addEventListener("click", this.close, true);
-    document.getElementById("close-button-right").addEventListener("click", this.close, true);
 
-    //this.extensionServer.initExtensions();
 
     function onPopulateScriptObjects()
     {
         if (!WebInspector.currentPanel)
             WebInspector.showPanel(WebInspector.settings.lastActivePanel);
     }
-    //InspectorBackend.populateScriptObjects(onPopulateScriptObjects);
-
-    if (Preferences.debuggerAlwaysEnabled || WebInspector.settings.debuggerEnabled)
-        this.debuggerModel.enableDebugger();
-    if (Preferences.profilerAlwaysEnabled || WebInspector.settings.profilerEnabled)
-        InspectorBackend.enableProfiler();
-    if (WebInspector.settings.monitoringXHREnabled)
-        InspectorBackend.setMonitoringXHREnabled(true);
-
-    //InspectorBackend.setConsoleMessagesEnabled(true);
 
     function propertyNamesCallback(names)
     {
         WebInspector.cssNameCompletions = new WebInspector.CSSCompletions(names);
     }
-    // As a DOMAgent method, this needs to happen after the frontend has loaded and the agent is available.
-    //InspectorBackend.getSupportedCSSProperties(propertyNamesCallback);
+    //show timeline panel immediately
+    this.currentPanel = this.panels.timeline;
 }
 
 WebInspector.addPanelToolbarIcon = function(toolbarElement, panel, previousToolbarItem)
 {
     var panelToolbarItem = panel.toolbarItem;
     this.panelOrder.push(panel);
-    panelToolbarItem.addEventListener("click", this._toolbarItemClicked.bind(this));
     if (previousToolbarItem)
         toolbarElement.insertBefore(panelToolbarItem, previousToolbarItem.nextSibling);
     else
@@ -707,27 +654,7 @@ WebInspector.openResource = function(resourceURL, inResourcesPanel)
     } else
         InspectorBackend.openInInspectedWindow(resource ? resource.url : resourceURL);
 }
-/*
-WebInspector._registerShortcuts = function()
-{
-    var shortcut = WebInspector.KeyboardShortcut;
-    var section = WebInspector.shortcutsHelp.section(WebInspector.UIString("All Panels"));
-    var keys = [
-        shortcut.shortcutToString("]", shortcut.Modifiers.CtrlOrMeta),
-        shortcut.shortcutToString("[", shortcut.Modifiers.CtrlOrMeta)
-    ];
-    section.addRelatedKeys(keys, WebInspector.UIString("Next/previous panel"));
-    section.addKey(shortcut.shortcutToString(shortcut.Keys.Esc), WebInspector.UIString("Toggle console"));
-    section.addKey(shortcut.shortcutToString("f", shortcut.Modifiers.CtrlOrMeta), WebInspector.UIString("Search"));
-    if (WebInspector.isMac()) {
-        keys = [
-            shortcut.shortcutToString("g", shortcut.Modifiers.Meta),
-            shortcut.shortcutToString("g", shortcut.Modifiers.Meta | shortcut.Modifiers.Shift)
-        ];
-        section.addRelatedKeys(keys, WebInspector.UIString("Find next/previous"));
-    }
-}
-*/
+
 WebInspector.documentKeyDown = function(event)
 {
     var isInputElement = event.target.nodeName === "INPUT";
@@ -775,44 +702,6 @@ WebInspector.documentKeyDown = function(event)
             var isForwardKey = !isInEditMode && (isMac ? event.metaKey : event.ctrlKey);
             if (isForwardKey && this._panelHistory.canGoForward()) {
                 this._panelHistory.goForward();
-                event.preventDefault();
-            }
-            break;
-
-        //case "U+001B": // Escape key
-        //    event.preventDefault();
-        //    if (this.drawer.fullPanel)
-        //        return;
-
-        //    this.drawer.visible = !this.drawer.visible;
-        //    break;
-
-        case "U+0046": // F key
-            if (isMac)
-                var isFindKey = event.metaKey && !event.ctrlKey && !event.altKey && !event.shiftKey;
-            else
-                var isFindKey = event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey;
-
-            if (isFindKey) {
-                WebInspector.focusSearchField();
-                event.preventDefault();
-            }
-            break;
-
-        case "F3":
-            if (!isMac) {
-                WebInspector.focusSearchField();
-                event.preventDefault();
-            }
-            break;
-
-        case "U+0047": // G key
-            if (isMac && event.metaKey && !event.ctrlKey && !event.altKey) {
-                if (event.shiftKey) {
-                    if (this.currentPanel.jumpToPreviousSearchResult)
-                        this.currentPanel.jumpToPreviousSearchResult();
-                } else if (this.currentPanel.jumpToNextSearchResult)
-                    this.currentPanel.jumpToNextSearchResult();
                 event.preventDefault();
             }
             break;
@@ -983,130 +872,6 @@ WebInspector.animateStyle = function(animations, duration, callback)
     };
 }
 
-WebInspector.updateSearchLabel = function()
-{
-    if (!this.currentPanel)
-        return;
-
-    var newLabel = WebInspector.UIString("Search %s", this.currentPanel.toolbarItemLabel);
-    if (this.attached)
-        document.getElementById("search").setAttribute("placeholder", newLabel);
-    else {
-        document.getElementById("search").removeAttribute("placeholder");
-        document.getElementById("search-toolbar-label").textContent = newLabel;
-    }
-}
-
-WebInspector.focusSearchField = function()
-{
-    var searchField = document.getElementById("search");
-    searchField.focus();
-    searchField.select();
-}
-/*
-WebInspector.toggleAttach = function()
-{
-    if (!this.attached)
-        InspectorFrontendHost.requestAttachWindow();
-    else
-        InspectorFrontendHost.requestDetachWindow();
-}
-*/
-
-WebInspector.toolbarDragStart = function(event)
-{
-    if ((!WebInspector.attached && WebInspector.platformFlavor !== WebInspector.PlatformFlavor.MacLeopard && WebInspector.platformFlavor !== WebInspector.PlatformFlavor.MacSnowLeopard) || WebInspector.port == "qt")
-        return;
-
-    var target = event.target;
-    if (target.hasStyleClass("toolbar-item") && target.hasStyleClass("toggleable"))
-        return;
-
-    var toolbar = document.getElementById("toolbar");
-    if (target !== toolbar && !target.hasStyleClass("toolbar-item"))
-        return;
-
-    toolbar.lastScreenX = event.screenX;
-    toolbar.lastScreenY = event.screenY;
-
-    WebInspector.elementDragStart(toolbar, WebInspector.toolbarDrag, WebInspector.toolbarDragEnd, event, (WebInspector.attached ? "row-resize" : "default"));
-}
-
-WebInspector.toolbarDragEnd = function(event)
-{
-    var toolbar = document.getElementById("toolbar");
-
-    WebInspector.elementDragEnd(event);
-
-    delete toolbar.lastScreenX;
-    delete toolbar.lastScreenY;
-}
-
-WebInspector.toolbarDrag = function(event)
-{
-    var toolbar = document.getElementById("toolbar");
-
-    if (WebInspector.attached) {
-        var height = window.innerHeight - (event.screenY - toolbar.lastScreenY);
-
-        InspectorFrontendHost.setAttachedWindowHeight(height);
-    } else {
-        var x = event.screenX - toolbar.lastScreenX;
-        var y = event.screenY - toolbar.lastScreenY;
-
-        // We cannot call window.moveBy here because it restricts the movement
-        // of the window at the edges.
-        InspectorFrontendHost.moveWindowBy(x, y);
-    }
-
-    toolbar.lastScreenX = event.screenX;
-    toolbar.lastScreenY = event.screenY;
-
-    event.preventDefault();
-}
-
-WebInspector.elementDragStart = function(element, dividerDrag, elementDragEnd, event, cursor)
-{
-    if (this._elementDraggingEventListener || this._elementEndDraggingEventListener)
-        this.elementDragEnd(event);
-
-    this._elementDraggingEventListener = dividerDrag;
-    this._elementEndDraggingEventListener = elementDragEnd;
-
-    document.addEventListener("mousemove", dividerDrag, true);
-    document.addEventListener("mouseup", elementDragEnd, true);
-
-    document.body.style.cursor = cursor;
-
-    event.preventDefault();
-}
-
-WebInspector.elementDragEnd = function(event)
-{
-    document.removeEventListener("mousemove", this._elementDraggingEventListener, true);
-    document.removeEventListener("mouseup", this._elementEndDraggingEventListener, true);
-
-    document.body.style.removeProperty("cursor");
-
-    delete this._elementDraggingEventListener;
-    delete this._elementEndDraggingEventListener;
-
-    event.preventDefault();
-}
-
-WebInspector.toggleSearchingForNode = function()
-{
-    if (this.panels.elements) {
-        this.showPanel("elements");
-        this.panels.elements.toggleSearchingForNode();
-    }
-}
-
-WebInspector.showConsole = function()
-{
-    this.drawer.showView(this.console);
-}
-
 WebInspector.showPanel = function(panel)
 {
     if (!(panel in this.panels))
@@ -1130,16 +895,6 @@ WebInspector.loadEventFired = function(time)
     this.panels.resources.loadEventFired();
     this.extensionServer.notifyPageLoaded((time - WebInspector.mainResource.startTime) * 1000);
     this.mainResourceLoadTime = time;
-}
-
-WebInspector.searchingForNodeWasEnabled = function()
-{
-    this.panels.elements.searchingForNodeWasEnabled();
-}
-
-WebInspector.searchingForNodeWasDisabled = function()
-{
-    this.panels.elements.searchingForNodeWasDisabled();
 }
 
 WebInspector.reset = function()
@@ -1497,154 +1252,10 @@ WebInspector.addMainEventListeners = function(doc)
     doc.addEventListener("click", this.documentClick.bind(this), true);
 }
 
-WebInspector._searchFieldManualFocus = function(event)
-{
-    this.currentFocusElement = event.target;
-    this._previousFocusElement = event.target;
-}
-
-WebInspector._searchKeyDown = function(event)
-{
-    // Escape Key will clear the field and clear the search results
-    if (event.keyCode === WebInspector.KeyboardShortcut.Keys.Esc.code) {
-        // If focus belongs here and text is empty - nothing to do, return unhandled.
-        if (event.target.value === "" && this.currentFocusElement === this.previousFocusElement)
-            return;
-        event.preventDefault();
-        event.stopPropagation();
-        // When search was selected manually and is currently blank, we'd like Esc stay unhandled
-        // and hit console drawer handler.
-        event.target.value = "";
-
-        this.performSearch(event);
-        this.currentFocusElement = this.previousFocusElement;
-        if (this.currentFocusElement === event.target)
-            this.currentFocusElement.select();
-        return false;
-    }
-
-    if (!isEnterKey(event))
-        return false;
-
-    // Select all of the text so the user can easily type an entirely new query.
-    event.target.select();
-
-    // Only call performSearch if the Enter key was pressed. Otherwise the search
-    // performance is poor because of searching on every key. The search field has
-    // the incremental attribute set, so we still get incremental searches.
-    this.performSearch(event);
-
-    // Call preventDefault since this was the Enter key. This prevents a "search" event
-    // from firing for key down. This stops performSearch from being called twice in a row.
-    event.preventDefault();
-}
-
-WebInspector.performSearch = function(event)
-{
-    var forceSearch = event.keyIdentifier === "Enter";
-    this.doPerformSearch(event.target.value, forceSearch, event.shiftKey, false);
-}
-
-WebInspector.cancelSearch = function()
-{
-    document.getElementById("search").value = "";
-    this.doPerformSearch("");
-}
-
-WebInspector.doPerformSearch = function(query, forceSearch, isBackwardSearch, repeatSearch)
-{
-    var isShortSearch = (query.length < 3);
-
-    // Clear a leftover short search flag due to a non-conflicting forced search.
-    if (isShortSearch && this.shortSearchWasForcedByKeyEvent && this.currentQuery !== query)
-        delete this.shortSearchWasForcedByKeyEvent;
-
-    // Indicate this was a forced search on a short query.
-    if (isShortSearch && forceSearch)
-        this.shortSearchWasForcedByKeyEvent = true;
-
-    if (!query || !query.length || (!forceSearch && isShortSearch)) {
-        // Prevent clobbering a short search forced by the user.
-        if (this.shortSearchWasForcedByKeyEvent) {
-            delete this.shortSearchWasForcedByKeyEvent;
-            return;
-        }
-
-        delete this.currentQuery;
-
-        for (var panelName in this.panels) {
-            var panel = this.panels[panelName];
-            var hadCurrentQuery = !!panel.currentQuery;
-            delete panel.currentQuery;
-            if (hadCurrentQuery && panel.searchCanceled)
-                panel.searchCanceled();
-        }
-
-        this.updateSearchMatchesCount();
-
-        return;
-    }
-
-    if (!repeatSearch && query === this.currentPanel.currentQuery && this.currentPanel.currentQuery === this.currentQuery) {
-        // When this is the same query and a forced search, jump to the next
-        // search result for a good user experience.
-        if (forceSearch) {
-            if (!isBackwardSearch && this.currentPanel.jumpToNextSearchResult)
-                this.currentPanel.jumpToNextSearchResult();
-            else if (isBackwardSearch && this.currentPanel.jumpToPreviousSearchResult)
-                this.currentPanel.jumpToPreviousSearchResult();
-        }
-        return;
-    }
-
-    this.currentQuery = query;
-
-    this.updateSearchMatchesCount();
-
-    if (!this.currentPanel.performSearch)
-        return;
-
-    this.currentPanel.currentQuery = query;
-    this.currentPanel.performSearch(query);
-}
-
 WebInspector.frontendReused = function()
 {
     this.networkManager.reset();
     this.reset();
-}
-
-WebInspector.addNodesToSearchResult = function(nodeIds)
-{
-    WebInspector.panels.elements.addNodesToSearchResult(nodeIds);
-}
-
-WebInspector.updateSearchMatchesCount = function(matches, panel)
-{
-    if (!panel)
-        panel = this.currentPanel;
-
-    panel.currentSearchMatches = matches;
-
-    if (panel !== this.currentPanel)
-        return;
-
-    if (!this.currentPanel.currentQuery) {
-        document.getElementById("search-results-matches").addStyleClass("hidden");
-        return;
-    }
-
-    if (matches) {
-        if (matches === 1)
-            var matchesString = WebInspector.UIString("1 match");
-        else
-            var matchesString = WebInspector.UIString("%d matches", matches);
-    } else
-        var matchesString = WebInspector.UIString("Not Found");
-
-    var matchesToolbarElement = document.getElementById("search-results-matches");
-    matchesToolbarElement.removeStyleClass("hidden");
-    matchesToolbarElement.textContent = matchesString;
 }
 
 WebInspector.UIString = function(string)
@@ -1817,12 +1428,6 @@ WebInspector.startEditing = function(element, config)
         cancel: editingCancelled.bind(element),
         commit: editingCommitted.bind(element)
     };
-}
-
-WebInspector._toolbarItemClicked = function(event)
-{
-    var toolbarItem = event.currentTarget;
-    this.currentPanel = toolbarItem.panel;
 }
 
 // This table maps MIME types to the Resource.Types which are valid for them.

@@ -199,36 +199,8 @@ body.attached #search-results-matches {
     margin-bottom: 6px;
 }
 
-.toolbar-item.elements .toolbar-icon {
-    background-image: url(Images/elementsIcon.png);
-}
-
-.toolbar-item.resources .toolbar-icon {
-    background-image: url(Images/resourcesIcon.png);
-}
-
-.toolbar-item.network .toolbar-icon {
-    background-image: url(Images/networkIcon.png);
-}
-
-.toolbar-item.scripts .toolbar-icon {
-    background-image: url(Images/scriptsIcon.png);
-}
-
 .toolbar-item.timeline .toolbar-icon {
     background-image: url(Images/timelineIcon.png);
-}
-
-.toolbar-item.profiles .toolbar-icon {
-    background-image: url(Images/profilesIcon.png);
-}
-
-.toolbar-item.audits .toolbar-icon {
-    background-image: url(Images/auditsIcon.png);
-}
-
-.toolbar-item.console .toolbar-icon {
-    background-image: url(Images/consoleIcon.png);
 }
 
 #close-button-left, #close-button-right {
