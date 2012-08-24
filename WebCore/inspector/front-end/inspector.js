@@ -32,19 +32,8 @@
 ;(function preloadImages()
 {
     (new Image()).src = "Images/clearConsoleButtonGlyph.png";
-    (new Image()).src = "Images/consoleButtonGlyph.png";
-    (new Image()).src = "Images/dockButtonGlyph.png";
-    (new Image()).src = "Images/enableOutlineButtonGlyph.png";
-    (new Image()).src = "Images/enableSolidButtonGlyph.png";
-    (new Image()).src = "Images/excludeButtonGlyph.png";
-    (new Image()).src = "Images/focusButtonGlyph.png";
-    (new Image()).src = "Images/largerResourcesButtonGlyph.png";
-    (new Image()).src = "Images/pauseOnExceptionButtonGlyph.png";
-    (new Image()).src = "Images/percentButtonGlyph.png";
     (new Image()).src = "Images/recordButtonGlyph.png";
     (new Image()).src = "Images/recordToggledButtonGlyph.png";
-    (new Image()).src = "Images/reloadButtonGlyph.png";
-    (new Image()).src = "Images/undockButtonGlyph.png";
 })();
 
 var WebInspector = {
@@ -779,6 +768,35 @@ WebInspector.animateStyle = function(animations, duration, callback)
         cancel: cancel,
         forceComplete: forceComplete
     };
+}
+
+WebInspector.elementDragStart = function(element, dividerDrag, elementDragEnd, event, cursor)
+{
+    if (this._elementDraggingEventListener || this._elementEndDraggingEventListener)
+        this.elementDragEnd(event);
+
+    this._elementDraggingEventListener = dividerDrag;
+    this._elementEndDraggingEventListener = elementDragEnd;
+
+    document.addEventListener("mousemove", dividerDrag, true);
+    document.addEventListener("mouseup", elementDragEnd, true);
+
+    document.body.style.cursor = cursor;
+
+    event.preventDefault();
+}
+
+WebInspector.elementDragEnd = function(event)
+{
+    document.removeEventListener("mousemove", this._elementDraggingEventListener, true);
+    document.removeEventListener("mouseup", this._elementEndDraggingEventListener, true);
+
+    document.body.style.removeProperty("cursor");
+
+    delete this._elementDraggingEventListener;
+    delete this._elementEndDraggingEventListener;
+
+    event.preventDefault();
 }
 
 WebInspector.showPanel = function(panel)
