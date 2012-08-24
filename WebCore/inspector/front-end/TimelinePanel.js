@@ -238,10 +238,10 @@ WebInspector.TimelinePanel.prototype = {
     _toggleTimelineButtonClicked: function()
     {
         if (this.toggleTimelineButton.toggled)
-            ;//InspectorBackend.stopTimelineProfiler();
+            this._timelineProfilerWasStopped();
         else {
             this._clearPanel();
-            //InspectorBackend.startTimelineProfiler();
+            this._timelineProfilerWasStarted();
         }
     },
 
