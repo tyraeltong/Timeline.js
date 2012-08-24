@@ -380,15 +380,16 @@ WebInspector.TimelineOverviewCalculator.prototype = {
 
     updateBoundaries: function(record)
     {
+        var result = false;
         if (typeof this.minimumBoundary === "undefined" || record.startTime < this.minimumBoundary) {
             this.minimumBoundary = record.startTime;
-            return true;
+            result = true;
         }
         if (typeof this.maximumBoundary === "undefined" || record.endTime > this.maximumBoundary) {
             this.maximumBoundary = record.endTime;
-            return true;
+            result = true;
         }
-        return false;
+        return result;
     },
 
     get boundarySpan()
