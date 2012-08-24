@@ -845,7 +845,7 @@ WebInspector.TimelinePanel.FormattedRecord = function(record, parentRecord, pane
         }
     } else if (record.type === recordTypes.URLEvent ||
                record.type === recordTypes.SOAPEvent ||
-               record.type === recordTypes.DBEvent) { 
+               record.type === recordTypes.DBEvent) {
         panel._customEventRecords[record.data.identifier] = this;
     }
 
@@ -871,6 +871,7 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
             cell.appendChild(label);
             var text = document.createElement("span");
             text.textContent = Number.secondsToString(this._aggregatedStats[index] + 0.0001);
+
             cell.appendChild(text);
         }
         return cell;
@@ -921,7 +922,7 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
         for (var category in categories)
             this._aggregatedStats[category] = 0;
         this._cpuTime = this._selfTime;
-
+        console.log(this);
         if (this._children) {
             for (var index = this._children.length; index; --index) {
                 var child = this._children[index - 1];
@@ -932,6 +933,14 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
             for (var category in this._aggregatedStats)
                 this._cpuTime += this._aggregatedStats[category];
         }
+
+        duration = this.endTime - this.startTime;
+        if (this.type == 30) // URL event
+          this._aggregatedStats['url'] = duration;
+        else if (this.type == 40) // SOAP event
+          this._aggregatedStats['soap'] = duration;
+        else if (this.type == 50)
+          this._aggregatedStats['db'] = duration;
     }
 }
 
