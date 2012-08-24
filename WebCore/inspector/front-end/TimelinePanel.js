@@ -145,7 +145,8 @@ WebInspector.TimelinePanel.prototype = {
             this._categories = {
                 url: new WebInspector.TimelineCategory("url", WebInspector.UIString("URL"), "rgb(47,102,236)"),
                 soap: new WebInspector.TimelineCategory("soap", WebInspector.UIString("SOAP"), "rgb(157,231,119)"),
-                db: new WebInspector.TimelineCategory("db", WebInspector.UIString("DB"), "rgb(164,60,255)")
+                db: new WebInspector.TimelineCategory("db", WebInspector.UIString("DB"), "rgb(164,60,255)"),
+                other: new WebInspector.TimelineCategory("other", WebInspector.UIString("Other"), "rgb(192,192,192)")
             };
         }
         return this._categories;
@@ -164,6 +165,7 @@ WebInspector.TimelinePanel.prototype = {
             recordStyles[recordTypes.URLEvent] = { title: WebInspector.UIString("URL Event"), category: this.categories.url };
             recordStyles[recordTypes.SOAPEvent] = { title: WebInspector.UIString("SOAP Event"), category: this.categories.soap };
             recordStyles[recordTypes.DBEvent] = { title: WebInspector.UIString("DB Event"), category: this.categories.db };
+            recordStyles[recordTypes.Other] = { title: WebInspector.UIString("Other"), category: this.categories.other };
             this._recordStylesArray = recordStyles;
         }
         return this._recordStylesArray;
@@ -259,6 +261,11 @@ WebInspector.TimelinePanel.prototype = {
     {
         this._innerAddRecordToTimeline(record, this._rootRecord);
         this._scheduleRefresh();
+    },
+
+    _isRecordExists: function(identifier)
+    {
+        return this._customEventRecords[identifier]!=null;
     },
 
     _findParentRecord: function(record)
@@ -895,6 +902,7 @@ WebInspector.TimelinePanel.FormattedRecord.prototype = {
             case recordTypes.URLEvent:
             case recordTypes.SOAPEvent:
             case recordTypes.DBEvent:
+            case recordTypes.Other:
             default:
                 if (this.details)
                     contentHelper._appendTextRow(WebInspector.UIString("Details"), this.details);

@@ -37,5 +37,6 @@ WebInspector.TimelineAgent.RecordType = {
     // customized types:
     URLEvent: 30,
     SOAPEvent: 40,
-    DBEvent: 50
+    DBEvent: 50,
+    Other: 99
 };

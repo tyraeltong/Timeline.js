@@ -3545,6 +3545,10 @@ body.inactive li.selected .bubble.search-matches {
     background-position-y: -11px;
 }
 
+.timeline-category-statusbar-item.timeline-category-other .timeline-category-checkbox {
+    background-position-y: -66px;
+}
+
 .timeline-tree-item {
     height: 18px;
     line-height: 15px;
